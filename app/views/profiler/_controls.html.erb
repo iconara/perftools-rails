@@ -1,0 +1,83 @@
+<div id="profiler_controls">
+  <div class="inner">
+    <button class="start">Start profiler</button>
+    <button class="stop">Stop profiler</button>
+  </div>
+</div>
+<script>
+$(function() {
+  var updateStatus = function(status) {
+    console.log("updateStatus", status);
+    
+    if (status == "changing") {
+      startButton.attr('disabled', true);
+      stopButton.attr('disabled', true);
+    } else if (status == "running") {
+      stopButton.attr('disabled', false);
+      stopButton.show();
+      startButton.hide();
+    } else { // stopped or unknown
+      startButton.attr('disabled', false);
+      startButton.show();
+      stopButton.hide();
+    }
+  }
+  
+  var doRequest = function(path, callback) {
+    $.ajax({
+      url: path,
+      dataType: "json",
+      success: function(data) {
+        updateStatus(data.status);
+        if (callback) {
+          callback(data);
+        }
+      }
+    });
+  }
+  
+  var checkStatus = function() {
+    doRequest("<%= status_profiler_path %>");
+  }
+  
+  var startProfiler = function() {
+    doRequest("<%= start_profiler_path %>");
+  }
+  
+  var stopProfiler = function() {
+    doRequest("<%= stop_profiler_path %>", function(data) {
+      window.location.href = "<%= profiler_path(:id => 'XYZ') %>".replace('XYZ', data.id);
+    });
+  }
+  
+  var startButton = $('#profiler_controls button.start');
+  var stopButton = $('#profiler_controls button.stop');
+  
+  startButton.hide();
+  stopButton.hide();
+  checkStatus();
+  
+  startButton.click(function() {
+    updateStatus('changing');
+    startProfiler();
+  });
+
+  stopButton.click(function() {
+    updateStatus('changing');
+    stopProfiler();
+  });
+});
+</script>
+<style>
+#profiler_controls {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: black;
+  color: white;
+}
+
+#profiler_controls .inner {
+  margin: 0.5em;
+}
+</style>
